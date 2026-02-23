@@ -1,31 +1,14 @@
-# used puppet to ssh config
-file { '/home/vagrant/.ssh/config':
-  ensure  => file,
-  mode    => '0600',
-  owner   => 'vagrant',
-  group   => 'vagrant',
+# Puppet manifest to configure SSH client
+include stdlib
+
+file_line { 'Turn off passwd auth':
+  path  => '/etc/ssh/ssh_config',
+  line  => '    PasswordAuthentication no',
+  match => '^.*PasswordAuthentication.*$',
 }
 
 file_line { 'Declare identity file':
-  path  => '/home/vagrant/.ssh/config',
+  path  => '/etc/ssh/ssh_config',
   line  => '    IdentityFile ~/.ssh/school',
-  match => '^\s*IdentityFile',
-}
-
-file_line { 'Turn off passwd auth':
-  path  => '/home/vagrant/.ssh/config',
-  line  => '    PasswordAuthentication no',
-  match => '^\s*PasswordAuthentication',
-}
-
-file_line { 'Force public key auth':
-  path  => '/home/vagrant/.ssh/config',
-  line  => '    PubkeyAuthentication yes',
-  match => '^\s*PubkeyAuthentication',
-}
-
-file_line { 'Define host wildcard':
-  path  => '/home/vagrant/.ssh/config',
-  line  => 'Host *',
-  match => '^Host \*',
+  match => '^.*IdentityFile.*$',
 }
