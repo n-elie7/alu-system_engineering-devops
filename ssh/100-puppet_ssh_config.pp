@@ -1,3 +1,4 @@
+# used puppet to ssh config
 file { '/home/vagrant/.ssh/config':
   ensure  => file,
   mode    => '0600',
