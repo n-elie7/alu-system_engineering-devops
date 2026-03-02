@@ -1,14 +1,76 @@
 #!/usr/bin/env bash
-# Configures Nginx with a custom 404 page
+# Configures Nginx with a 301 redirect and a custom 404 page
 
 sudo apt-get update -y
 sudo apt-get install -y nginx
 
+# Set the default page content
 echo "Holberton School for the win!" | sudo tee /var/www/html/index.html > /dev/null
 
-echo "Ceci n'est pas une page" | sudo tee /var/www/html/404.html > /dev/null
+# Create the custom 404 page
+sudo tee /var/www/html/404.html > /dev/null << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>404 — Ceci n'est pas une page</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Courier+Prime&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --bg: #0a0a0a; --fg: #f0ece1; --accent: #c9a84c; --muted: #555; }
+    body {
+      background: var(--bg); color: var(--fg);
+      font-family: 'Courier Prime', monospace;
+      min-height: 100vh; display: flex;
+      align-items: center; justify-content: center; overflow: hidden;
+    }
+    .container { text-align: center; padding: 2rem; animation: fadeUp 1s ease forwards; opacity: 0; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    .frame { border: 1px solid var(--muted); padding: 4rem 5rem; position: relative; max-width: 600px; }
+    .frame::before, .frame::after, .frame .corner-br, .frame .corner-bl {
+      content: ''; position: absolute; width: 12px; height: 12px;
+      border-color: var(--accent); border-style: solid;
+    }
+    .frame::before  { top: -1px; left: -1px;   border-width: 2px 0 0 2px; }
+    .frame::after   { top: -1px; right: -1px;  border-width: 2px 2px 0 0; }
+    .frame .corner-br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+    .frame .corner-bl { bottom: -1px; left: -1px;  border-width: 0 0 2px 2px; }
+    .number {
+      font-family: 'Playfair Display', serif; font-size: clamp(6rem, 20vw, 10rem);
+      font-weight: 700; color: var(--fg); line-height: 1; letter-spacing: -4px;
+      opacity: 0.08; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%); pointer-events: none; user-select: none; white-space: nowrap;
+    }
+    .label { font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.5rem; }
+    .title { font-family: 'Playfair Display', serif; font-size: clamp(1.4rem, 4vw, 2rem); font-style: italic; color: var(--fg); margin-bottom: 0.5rem; line-height: 1.3; }
+    .subtitle { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.15em; margin-bottom: 2.5rem; }
+    .divider { width: 40px; height: 1px; background: var(--accent); margin: 0 auto 2rem; }
+    .message { font-size: 0.8rem; color: var(--muted); line-height: 1.8; max-width: 300px; margin: 0 auto 2.5rem; }
+    .back-link { display: inline-block; font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--fg); text-decoration: none; border-bottom: 1px solid var(--accent); padding-bottom: 2px; transition: color 0.2s; }
+    .back-link:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="frame">
+      <span class="number">404</span>
+      <div class="corner-br"></div>
+      <div class="corner-bl"></div>
+      <p class="label">Erreur 404</p>
+      <h1 class="title">Ceci n'est pas une page</h1>
+      <p class="subtitle">— René Magritte, probably</p>
+      <div class="divider"></div>
+      <p class="message">The page you are looking for does not exist,<br/>has never existed, or has ceased to exist.<br/>Much like the pipe.</p>
+      <a href="/" class="back-link">← Return home</a>
+    </div>
+  </div>
+</body>
+</html>
+EOF
 
 # Add redirect rule and custom 404 to the default nginx server block
 sudo sed -i '/server_name _;/a \\n\tlocation /redirect_me {\n\t\treturn 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;\n\t}\n\n\terror_page 404 /404.html;\n\tlocation = /404.html {\n\t\tinternal;\n\t}' /etc/nginx/sites-available/default
 
+# Restart nginx without systemctl
 sudo service nginx restart
