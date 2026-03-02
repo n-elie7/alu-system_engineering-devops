@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Installs and configures Nginx to serve "Holberton School" on port 80
+
+sudo apt-get update -y
+sudo apt-get install -y nginx
+
+# Set the default page content
+echo "Holberton School for the win!" | sudo tee /var/www/html/index.html > /dev/null
+
+sudo service nginx restart
