@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Debugged web stack 0 container
 
-apt update -y
-apt install apache2 -y
+apt-get update -y
+apt-get install -y apache2
 
 echo "Hello Holberton" > /var/www/html/index.html
 
