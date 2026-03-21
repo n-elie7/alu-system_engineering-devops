@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# debug nginx likes port 80
+
+apt update -y
+apt install -y nginx
+
+service nginx start
