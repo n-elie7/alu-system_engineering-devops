@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# nginx like port 80
-apt-get update -y
-apt-get install -y nginx
-service nginx start 2>/dev/null || nginx
+# nginx likes port 80
+apt-get install -y nginx > /dev/null 2>&1
+nginx
