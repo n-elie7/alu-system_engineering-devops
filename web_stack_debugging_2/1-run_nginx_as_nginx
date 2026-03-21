@@ -1,56 +1,8 @@
 #!/bin/bash
 # Configure Nginx to run as the nginx user and listen on port 8080
-
-set -e
-
-# 1. Create nginx user if it doesn't exist
-if ! id -u nginx &>/dev/null; then
-    useradd -r -s /usr/sbin/nologin nginx
-fi
-
-# 2. Set the user directive in the main nginx configuration
-NGINX_CONF="/etc/nginx/nginx.conf"
-if grep -q "^user " "$NGINX_CONF"; then
-    sed -i 's/^user .*/user nginx;/' "$NGINX_CONF"
-else
-    # If the directive is commented, uncomment and set
-    sed -i 's/^#user .*/user nginx;/' "$NGINX_CONF"
-fi
-
-# 3. Change the listen port to 8080 in the default site configuration
-DEFAULT_SITE="/etc/nginx/sites-available/default"
-if [ -f "$DEFAULT_SITE" ]; then
-    sed -i 's/listen 80;/listen 8080;/g' "$DEFAULT_SITE"
-    sed -i 's/listen \[::\]:80;/listen \[::\]:8080;/g' "$DEFAULT_SITE"
-fi
-
-# Also handle possible alternative configuration file
-CONF_DEFAULT="/etc/nginx/conf.d/default.conf"
-if [ -f "$CONF_DEFAULT" ]; then
-    sed -i 's/listen 80;/listen 8080;/g' "$CONF_DEFAULT"
-    sed -i 's/listen \[::\]:80;/listen \[::\]:8080;/g' "$CONF_DEFAULT"
-fi
-
-# 4. Stop any running nginx processes
-if pgrep nginx > /dev/null; then
-    nginx -s stop 2>/dev/null || killall nginx 2>/dev/null
-    sleep 2
-fi
-
-# 5. Ensure required directories are writable by the nginx user
-chown -R nginx:nginx /var/log/nginx
-mkdir -p /var/run/nginx
-chown nginx:nginx /var/run/nginx
-chown -R nginx:nginx /var/lib/nginx 2>/dev/null || true
-
-# 6. Start nginx as the nginx user
-su -s /bin/bash - nginx -c "nginx"
-
-# 7. Verify the process is running (optional)
-sleep 2
-if pgrep nginx > /dev/null; then
-    echo "Nginx is now running as the nginx user on port 8080."
-else
-    echo "Error: Nginx failed to start." >&2
-    exit 1
-fi
+pkill nginx 2>/dev/null
+sleep 1
+sed -i 's/^user .*/user nginx;/' /etc/nginx/nginx.conf
+sed -i 's/listen \(\[::\]:\)\?80\b/listen \18080/g' /etc/nginx/sites-enabled/default
+chown -R nginx /var/log/nginx
+nginx
