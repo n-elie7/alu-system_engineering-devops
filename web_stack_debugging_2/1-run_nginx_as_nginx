@@ -1,24 +1,16 @@
 #!/usr/bin/env bash
-# Fix Nginx to run entirely as the nginx user on port 8080
 
-# Stop any running nginx or apache
-nginx stop 2>/dev/null
-apache2 stop 2>/dev/null
-pkill nginx 2>/dev/null
-pkill apache2 2>/dev/null
-
-# Change user to nginx in main config
+# Ensure user exists and update configs
+id -u nginx >/dev/null 2>&1 || useradd nginx
+sed -i 's/80;/8080;/g' /etc/nginx/sites-available/default
 sed -i 's/^user .*/user nginx;/' /etc/nginx/nginx.conf
 
-# Change listen port from 80 to 8080 in all site configs
-sed -i 's/listen 80/listen 8080/g' /etc/nginx/sites-enabled/default
-sed -i 's/listen \[::\]:80/listen [::]:8080/g' /etc/nginx/sites-enabled/default
+# Fix permissions and PID location
+chown -R nginx:nginx /var/lib/nginx /var/log/nginx
+mkdir -p /var/run/nginx
+chown -R nginx:nginx /var/run/nginx
+sed -i 's|pid /run/nginx.pid;|pid /var/run/nginx/nginx.pid;|' /etc/nginx/nginx.conf
 
-# Fix ownership so nginx user can write pid, logs, and lib files
-chown -R nginx:nginx /var/log/nginx
-chown -R nginx:nginx /var/lib/nginx
-touch /run/nginx.pid
-chown nginx:nginx /run/nginx.pid
-
-# Start nginx as the nginx user so master process also runs as nginx
-su -s /bin/bash -c 'nginx' nginx
+# Test and start as the nginx user
+/usr/sbin/nginx -t && pkill nginx || true
+su -s /bin/bash -c "/usr/sbin/nginx" nginx
