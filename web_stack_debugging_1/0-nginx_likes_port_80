@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # debug nginx likes port 80
 
-apt update -y
-apt install -y nginx
+apt-get update -y
+apt-get install -y nginx
 sed -i 's/listen 80 default_server;/listen 0.0.0.0:80 default_server;/' /etc/nginx/sites-available/default
 service nginx start
