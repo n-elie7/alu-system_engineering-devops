@@ -2,8 +2,8 @@
 # Fix Nginx to run entirely as the nginx user on port 8080
 
 # Stop any running nginx or apache
-service nginx stop 2>/dev/null
-service apache2 stop 2>/dev/null
+nginx stop 2>/dev/null
+apache2 stop 2>/dev/null
 pkill nginx 2>/dev/null
 pkill apache2 2>/dev/null
 
