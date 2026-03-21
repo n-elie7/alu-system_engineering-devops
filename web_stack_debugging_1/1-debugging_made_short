@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# nginx fix
-sed -i 's/8080/80/g' /etc/nginx/sites-enabled/default
+# debuggind made short
+apt-get install -y nginx > /dev/null 2>&1
 nginx
 rm /run/nginx.pid
