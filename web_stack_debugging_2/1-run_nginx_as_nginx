@@ -1,4 +1,5 @@
 #!/bin/bash
+# nginx as nginx
 set -e
 
 # 1. Create the nginx user if it doesn't exist
