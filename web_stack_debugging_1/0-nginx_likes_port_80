@@ -2,4 +2,4 @@
 # nginx like port 80
 apt-get update -y
 apt-get install -y nginx
-nginx
+service nginx start 2>/dev/null || nginx
