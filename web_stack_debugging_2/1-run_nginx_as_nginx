@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # changed nginx user
 apt-get install -y nginx > /dev/null 2>&1
-useradd --system --no-create-home --shell /usr/sbin/nologin nginx 2>/dev/null
-sed -i 's/^user .*/user nginx;/' /etc/nginx/nginx.conf
+sed -i 's/^user www-data/user nginx/' /etc/nginx/nginx.conf
 sed -i 's/listen \(\[::\]:\)\?80\b/listen \18080/g' /etc/nginx/sites-enabled/default
 chown -R nginx /var/log/nginx
 nginx
