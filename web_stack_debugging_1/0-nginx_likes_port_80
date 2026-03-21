@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-# nginx likes port 80
-apt-get install -y nginx > /dev/null 2>&1
+# nginx fix
+sed -i 's/8080/80/g' /etc/nginx/sites-enabled/default
 nginx
