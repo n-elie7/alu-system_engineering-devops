@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# debugging made short
-apt-get update -y
+# Fix nginx port and service state
 apt-get install -y nginx
+pkill nginx 2>/dev/null
 nginx
