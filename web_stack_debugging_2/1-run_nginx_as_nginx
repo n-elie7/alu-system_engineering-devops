@@ -1,8 +1,60 @@
 #!/bin/bash
-# Configure Nginx to run as the nginx user and listen on port 8080
-pkill nginx 2>/dev/null
-sleep 1
-sed -i 's/^user .*/user nginx;/' /etc/nginx/nginx.conf
-sed -i 's/listen \(\[::\]:\)\?80\b/listen \18080/g' /etc/nginx/sites-enabled/default
-chown -R nginx /var/log/nginx
-nginx
+set -e
+
+# 1. Create the nginx user if it doesn't exist
+if ! id -u nginx &>/dev/null; then
+    useradd -r -s /usr/sbin/nologin nginx
+fi
+
+# 2. Stop any currently running Nginx processes
+if pgrep nginx > /dev/null; then
+    nginx -s stop 2>/dev/null || pkill nginx 2>/dev/null
+    sleep 2
+fi
+
+# 3. Configure Nginx to run as the nginx user
+NGINX_CONF="/etc/nginx/nginx.conf"
+if grep -q "^user " "$NGINX_CONF"; then
+    sed -i 's/^user .*/user nginx;/' "$NGINX_CONF"
+else
+    # If the line is commented or missing, add it at the top
+    sed -i 's/^#user .*/user nginx;/' "$NGINX_CONF"
+    grep -q "^user nginx;" "$NGINX_CONF" || sed -i '1i user nginx;' "$NGINX_CONF"
+fi
+
+# 4. Set PID file to a directory writable by the nginx user
+#    (default /run/nginx.pid is not writable by non‑root)
+if grep -q "^pid " "$NGINX_CONF"; then
+    sed -i 's|^pid .*;|pid /var/run/nginx/nginx.pid;|' "$NGINX_CONF"
+else
+    sed -i 's|^#pid .*;|pid /var/run/nginx/nginx.pid;|' "$NGINX_CONF"
+    grep -q "^pid " "$NGINX_CONF" || sed -i '/^user/a pid /var/run/nginx/nginx.pid;' "$NGINX_CONF"
+fi
+
+# 5. Change the listen port to 8080 in the default site
+DEFAULT_SITE="/etc/nginx/sites-available/default"
+if [ -f "$DEFAULT_SITE" ]; then
+    sed -i 's/listen 80;/listen 8080;/g' "$DEFAULT_SITE"
+    sed -i 's/listen \[::\]:80;/listen \[::\]:8080;/g' "$DEFAULT_SITE"
+fi
+CONF_DEFAULT="/etc/nginx/conf.d/default.conf"
+if [ -f "$CONF_DEFAULT" ]; then
+    sed -i 's/listen 80;/listen 8080;/g' "$CONF_DEFAULT"
+    sed -i 's/listen \[::\]:80;/listen \[::\]:8080;/g' "$CONF_DEFAULT"
+fi
+
+# 6. Prepare directories that Nginx needs to write to
+mkdir -p /var/log/nginx /var/run/nginx /var/lib/nginx
+chown -R nginx:nginx /var/log/nginx /var/run/nginx /var/lib/nginx 2>/dev/null || true
+
+# 7. Start Nginx as the nginx user
+su -s /bin/bash - nginx -c "/usr/sbin/nginx"
+
+# 8. Verify that it's running (optional, helps debugging)
+sleep 2
+if pgrep -u nginx nginx > /dev/null; then
+    echo "Nginx is now running as the nginx user on port 8080."
+else
+    echo "Error: Nginx failed to start." >&2
+    exit 1
+fi
