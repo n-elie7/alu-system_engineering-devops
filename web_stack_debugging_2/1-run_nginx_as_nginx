@@ -19,7 +19,7 @@ fi
 
 # Fix permissions (critical for non-root execution)
 mkdir -p /var/log/nginx /var/lib/nginx /run
-chown -R "$NGINX_USER":"$NGINX_USER" /var/log/nginx /var/lib/nginx /run
+chown -R "$NGINX_USER:$NGINX_USER" /var/log/nginx /var/lib/nginx /run
 
 # Stop any running nginx
 pkill nginx 2>/dev/null
@@ -29,4 +29,4 @@ sleep 1
 su -s /bin/sh -c "$NGINX_BIN -c $NGINX_CONF" "$NGINX_USER"
 
 # Verify nginx is running as nginx user
-ps aux | grep "[n]ginx"
+pgrep -u nginx -a nginx
