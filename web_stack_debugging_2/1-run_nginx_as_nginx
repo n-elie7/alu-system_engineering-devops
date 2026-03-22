@@ -1,46 +1,32 @@
 #!/usr/bin/env bash
-# Fix Nginx to run entirely as the nginx user on port 8080
+# Configure nginx to run as nginx user on port 8080
 
-NGINX_BIN=${NGINX_BIN:-/usr/sbin/nginx}
-NGINX_CONF=${NGINX_CONF:-/etc/nginx/nginx.conf}
-LOG_DIRS=(/var/log/nginx /var/lib/nginx)
-NGINX_USER=${NGINX_USER:-nginx}
-NGINX_GROUP=${NGINX_GROUP:-nginx}
+NGINX_BIN="/usr/sbin/nginx"
+NGINX_CONF="/etc/nginx/nginx.conf"
+NGINX_USER="nginx"
 
-# Change user directive in nginx.conf
+# Ensure nginx user exists
+id "$NGINX_USER" &>/dev/null || useradd -r -s /sbin/nologin "$NGINX_USER"
+
+# Fix nginx main config: enforce user
 sed -i "s/^user .*/user $NGINX_USER;/" "$NGINX_CONF"
 
-# Change port 80 to 8080 in site configs (handle both locations)
-if [[ -f /etc/nginx/sites-available/default ]]; then
-  sed -i 's/listen 80/listen 8080/g' /etc/nginx/sites-available/default
-  sed -i 's/listen \[::\]:80/listen [::]:8080/g' /etc/nginx/sites-available/default
-fi
-if [[ -f /etc/nginx/sites-enabled/default ]]; then
-  sed -i 's/listen 80/listen 8080/g' /etc/nginx/sites-enabled/default
-  sed -i 's/listen \[::\]:80/listen [::]:8080/g' /etc/nginx/sites-enabled/default
+# Ensure it listens on all interfaces on 8080
+if [ -f /etc/nginx/sites-available/default ]; then
+    sed -i 's/listen 80;/listen 0.0.0.0:8080;/g' /etc/nginx/sites-available/default
+    sed -i 's/listen \[::\]:80;/listen [::]:8080;/g' /etc/nginx/sites-available/default
 fi
 
-# Ensure PID path is writable
-pid_path=$(awk '/^[[:space:]]*pid[[:space:]]+/{gsub(/;/,"",$2); print $2; exit}' "$NGINX_CONF" || true)
-pid_dir=$(dirname "${pid_path:-/run/nginx.pid}")
-mkdir -p "$pid_dir"
-chown -R "$NGINX_USER:$NGINX_GROUP" "$pid_dir"
-
-# Ensure log and lib dirs are writable
-for d in "${LOG_DIRS[@]}"; do
-  mkdir -p "$d"
-  chown -R "$NGINX_USER:$NGINX_GROUP" "$d"
-done
+# Fix permissions (critical for non-root execution)
+mkdir -p /var/log/nginx /var/lib/nginx /run
+chown -R "$NGINX_USER":"$NGINX_USER" /var/log/nginx /var/lib/nginx /run
 
 # Stop any running nginx
-if pgrep -x nginx >/dev/null 2>&1; then
-  pkill -9 nginx
-  sleep 1
-fi
+pkill nginx 2>/dev/null
+sleep 1
 
-# Start nginx as the nginx user
-if command -v runuser >/dev/null 2>&1; then
-  runuser -u "$NGINX_USER" -- "$NGINX_BIN" -c "$NGINX_CONF"
-else
-  su -s /bin/sh -c "$NGINX_BIN -c $NGINX_CONF" "$NGINX_USER"
-fi
+# Run nginx completely as nginx user (NOT root)
+su -s /bin/sh -c "$NGINX_BIN -c $NGINX_CONF" "$NGINX_USER"
+
+# Verify nginx is running as nginx user
+ps aux | grep "[n]ginx"
