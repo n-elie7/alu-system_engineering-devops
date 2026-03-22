@@ -36,11 +36,11 @@ sed -i "s/^user .*/user $NGINX_USER;/" "$NGINX_CONF"
 pid_path=$(awk '/^[[:space:]]*pid[[:space:]]+/{gsub(/;/,"",$2); print $2; exit}' "$NGINX_CONF" || true)
 pid_dir=$(dirname "${pid_path:-/run/nginx.pid}")
 mkdir -p "$pid_dir"
-chown -R "$NGINX_USER":"$NGINX_GROUP" "$pid_dir"
+chown -R "$NGINX_USER:$NGINX_GROUP" "$pid_dir"
 
 for d in "${LOG_DIRS[@]}"; do
   mkdir -p "$d"
-  chown -R "$NGINX_USER":"$NGINX_GROUP" "$d"
+  chown -R "$NGINX_USER:$NGINX_GROUP" "$d"
 done
 
 # Restart Nginx
